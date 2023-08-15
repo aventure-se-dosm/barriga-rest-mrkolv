@@ -1,0 +1,15 @@
+.class
+.classpath
+.config
+.properties
+.project
+.settings
+.pom
+
+
+
+target/
+target/*
+
+./*.bin
+./.temp
