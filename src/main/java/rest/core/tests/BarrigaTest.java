@@ -13,6 +13,7 @@ import org.junit.Test;
 import br.dev.marcelodeoliveira.rest.model.UserAuth;
 import io.restassured.http.ContentType;
 import org.junit.Assert;
+
 import rest.core.BaseTest;
 import rest.model.requests.ContaRequest;
 
@@ -87,27 +88,37 @@ public class BarrigaTest extends BaseTest  {
 		System.out.println(contasCriadasList.get(0));
 		Assert.assertTrue(contasCriadasList.size() > 0);
 	}
-
-	private String getCookieStringFromResponse(String email, String senha) {
 	
-
-		String cookie = given().log().all()
-				.contentType(ContentType.URLENC.withCharset(CharEncoding.UTF_8))
-				.formParam(email, "automation.dvmrkolv@gmail.com")
-				.formParam(senha, "wXY2AUQXYy3gbeq")
-				.when()
-				.post("/signin")
-				// - it doesn't work
-				//.post("http://seubarriga.wcaquino.me/logar")
-				.then().log().all()
-				.extract().header("set-cookie");
+	@Test
+	public void DeveAlterarUmaContaSalva() {
 		
-	// if(cookie != null) 
-		 return cookie;
-	// throw new RuntimeException("cookie nulo");
+		ContaRequest conta = new ContaRequest(String.join("_", "Nova Conta", LocalDateTime.now().toString()));
+		
+		String idContaCriada = given().log().all()
+					.body(conta)
+					.header("Authorization", String.join(" ", "JWT", getToken()))
+					.contentType(ContentType.JSON.withCharset(CharEncoding.UTF_8))
+				
+					.when()
+					.post("/contas")
+					.then().log().all()
+					.statusCode(HttpStatus.SC_CREATED)
+					.extract().path("id").toString();
+		;
+					
+			String idContaAlterada = given().log().all()
+				.body(conta)
+				.header("Authorization", String.join(" ", "JWT", getToken()))
+				.contentType(ContentType.JSON.withCharset(CharEncoding.UTF_8))
+				
+			.when()
+				.put("/contas/".concat(idContaCriada))
+			.then().log().all()
+				.statusCode(HttpStatus.SC_OK)
+				.extract().path("id").toString();
+		;
+		
+		Assert.assertEquals(idContaCriada, idContaAlterada);
 	}
-	
-	private String getCookieValue(String cookie) {
-		return cookie.split("=")[1].split(";")[0];
-	}
+
 }
