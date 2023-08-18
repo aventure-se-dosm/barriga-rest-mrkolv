@@ -118,6 +118,7 @@ public class BarrigaTest extends BaseTest  {
 		;
 		
 		Assert.assertEquals(idContaCriada, idContaAlterada);
+
 	}
 	
 	@Test
@@ -148,6 +149,7 @@ public class BarrigaTest extends BaseTest  {
 		
 		Assert.assertEquals(erro, "Já existe uma conta com esse nome!");
 	
+
 	}
 
 }
