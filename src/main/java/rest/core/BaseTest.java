@@ -1,17 +1,9 @@
 package rest.core;
 
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetEncoder;
-
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MaximizeAction;
-
 import org.apache.commons.codec.CharEncoding;
-import org.apache.commons.lang3.CharSet;
-import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
-import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
-import groovyjarjarantlr.LexerSharedInputState;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.builder.ResponseSpecBuilder;
@@ -26,11 +18,12 @@ public class BaseTest implements Constants {
 	/**
 	 * 
 	 */
-	@AfterClass
-	public static void setupTest() {
+	@BeforeClass
+
+	public static void setupTest () {
 
 		RestAssured.baseURI = APP_BASE_URL;
-		RestAssured.port = APP_PORT_HTTP;
+		//RestAssured.port = APP_PORT_HTTP;
 		RestAssured.basePath = APP_BASE_PATH;
 		
 		

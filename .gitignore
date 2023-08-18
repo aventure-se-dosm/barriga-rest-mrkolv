@@ -1,6 +1,8 @@
+.bin
 .class
 .classpath
 .config
+.meta
 .properties
 .project
 .settings
