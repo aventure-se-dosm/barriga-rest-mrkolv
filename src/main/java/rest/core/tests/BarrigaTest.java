@@ -7,13 +7,17 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.mail.internet.ParseException;
+
 import org.apache.commons.codec.CharEncoding;
 import org.apache.http.HttpStatus;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import br.dev.marcelodeoliveira.rest.model.UserAuth;
 import io.restassured.http.ContentType;
+import io.restassured.response.Validatable;
 import rest.core.BaseTest;
 import rest.model.enums.TipoTransacao;
 import rest.model.requests.ContaRequest;
@@ -73,7 +77,8 @@ public class BarrigaTest extends BaseTest  {
 	public void DeveCriarConta() {
 		
 		ContaRequest conta = new ContaRequest(String.join("_", "Nova Conta", LocalDateTime.now().toString()));
-
+		
+		
 		 String idContaCriada = RequestWithJwtToken()
 		.body(conta)	
 		.accept(ContentType.JSON)
@@ -183,5 +188,15 @@ public class BarrigaTest extends BaseTest  {
 		System.out.println(transacaoReq);
 	}
 	
+	@Test
+	public void deveExcluirUmaConta() {
+		
+		 Integer newAccountId = 
+			createApiResource("/contas", new ContaRequest("Conta a ser Excuída"))
+			.extract().path("id");
+		 
+		deleteAPIResource("/contas", newAccountId)
+		;
+	}
 
 }

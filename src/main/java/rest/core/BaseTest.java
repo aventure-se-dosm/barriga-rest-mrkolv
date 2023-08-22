@@ -1,12 +1,15 @@
 package rest.core;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.http.Method.*;
 
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.codec.CharEncoding;
 import org.apache.http.HttpStatus;
+import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -17,6 +20,8 @@ import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.builder.ResponseSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.http.Header;
+import io.restassured.http.Method;
+import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import rest.core.utils.Constants;
 
@@ -40,15 +45,11 @@ public class BaseTest implements Constants {
 		return token;
 	}
 
-	/**
-	 * 
-	 */
 	@BeforeClass
 	public static void setupTest() {
 		
 		accountIdList = new ArrayList<>();
 		transactionIdList = new ArrayList<>();
-		
 		
 		RestAssured.baseURI = APP_BASE_URL;
 		RestAssured.port = APP_PORT_DEFAULT;	
@@ -62,7 +63,7 @@ public class BaseTest implements Constants {
 
 		RestAssured.requestSpecification = reqBuilder.build();
 		RestAssured.responseSpecification = resBuilder.build();
-		resetDataMass();
+		cleanUpApiCreatedTestDataMass();
 	}
 	
 	protected boolean savedTestAccountIds (String accountId) {
@@ -72,10 +73,6 @@ public class BaseTest implements Constants {
 		return getListTransactionId().add(accountId);
 	}
 	
-	@AfterClass
-	public static void resetDataMass() {
-		cleanUpApiCreatedTestDataMass();	
-	}
 	
 	protected static RequestSpecification loginWithFormParams() {
 		String email = "email"; // <input id='email' ... name='email'>
@@ -96,42 +93,59 @@ public class BaseTest implements Constants {
 
 	}
 	
-	public static void cleanUpApiCreatedTestDataMass() {
-		cleanAllTestTransactions();
-		cleanAllAllTestAccounts();
-	}
-	
-	private static void cleanAllTestTransactions() {
-		
-		List<String> allApiTransactions = 
+	private static void applyStaticallyRequestMethodForAllResourcesId(Method method, String basepath ) {
+		List<String> allApiResourceId = 
 				RequestWithJwtToken()
-				.get(APP_BASE_URL+"/transacoes")
+				.get(basepath)
 				.then().log().all()
 				.extract().jsonPath().getList("id");
 		
-		if (allApiTransactions.isEmpty()) return;
+		if (allApiResourceId.isEmpty()) return;
 		
-		
-		for(Object ResourceId : allApiTransactions) { 
-			deleteAPIResource("/transacoes", ResourceId);
-		}
-		
-	}
-
-	private static void cleanAllAllTestAccounts() {
-		List<String> allApiAccounts = 
-		RequestWithJwtToken()
-			.get(APP_BASE_URL+"/contas")
-		.then().log().all()
-		.extract().jsonPath().getList("id");
-
-				if (allApiAccounts.isEmpty()) return;
-		
-		for(Object ResourceId : allApiAccounts) {
-			deleteAPIResource("/contas", ResourceId);
+		for(Object apiResourceId : allApiResourceId) {
+			applyStaticallyAPIMethodToResource(method, basepath, apiResourceId);
 		}
 		;
+	}
+	
+	@AfterClass
+	public static void finishTest() {
+		cleanUpApiCreatedTestDataMass();
+	}
+	
+	public static  boolean cleanUpApiCreatedTestDataMass() {
+		applyStaticallyRequestMethodForAllResourcesId(Method.DELETE, "/transacoes");
+		applyStaticallyRequestMethodForAllResourcesId(Method.DELETE, "/contas");
+		return true;
+	}
+
+
+	
+	private static ValidatableResponse applyStaticallyAPIMethodToResource(Method method, String basepath, Object resourceId) {
+		return RequestWithJwtToken()
+		.request(method, String.join("/", basepath, resourceId.toString()))
+		.then().statusCode(getMethodExpectedStatusCode(method));
+	}
+	protected static ValidatableResponse applyAPIMethodToResource(Method method, String basepath, Object resourceId) {
+		return RequestWithJwtToken()
 				
+				.request(method, String.join("/", basepath, method.equals(Method.GET)?"\r":resourceId.toString()))
+				.then().statusCode(getMethodExpectedStatusCode(method));
+	}
+	
+	private static int getMethodExpectedStatusCode(Method method) {
+		switch(method) {
+		case GET: return HttpStatus.SC_OK;
+		case DELETE: return HttpStatus.SC_NO_CONTENT;
+		//case HEAD: return HttpStatus.SC_OK;
+		//case OPTIONS: return HttpStatus.SC_OK;
+		//case PATCH: return HttpStatus.SC_OK;
+		case POST: return HttpStatus.SC_CREATED;
+		case PUT: return HttpStatus.SC_ACCEPTED;
+		//case TRACE: return HttpStatus.SC_OK;
+		default: throw new InvalidParameterException(String.format("Método não reconhecido: [%s]", method.toString()));
+		
+		}
 	}
 
 	private static String getCookieStringFromResponse(String email, String senha) {
@@ -147,13 +161,39 @@ public class BaseTest implements Constants {
 		return cookie.split("=")[1].split(";")[0];
 	}
 	
-	private static void  deleteAPIResource(String basePath, Object value) {
-		RequestWithJwtToken()
-		.delete(String.join("/", basePath, value.toString()))
-		.then().log().all()
-		.statusCode(HttpStatus.SC_NO_CONTENT)
-		;
+	protected  ValidatableResponse  deleteAPIResource(String basePath, Object resourceId) {
+		return RequestWithJwtToken()		
+				.request(Method.DELETE, String.join("/", basePath, resourceId.toString()))
+				.then().statusCode(getMethodExpectedStatusCode(Method.DELETE));
 	}
+	
+	protected ValidatableResponse createApiResource(String basePath,  Object requestBody) {
+		return RequestWithJwtToken()
+				.body(requestBody)
+				.request(Method.POST, String.join("/", basePath))
+				.then()
+				.statusCode(getMethodExpectedStatusCode(Method.POST))
+				;
+	}
+	protected ValidatableResponse editApiResource(String basePath,  Object requestBody) {
+		return RequestWithJwtToken()
+				.body(requestBody)
+				.request(Method.PUT, String.join("/", basePath))
+				.then().statusCode(getMethodExpectedStatusCode(Method.PUT));
+	}
+	protected ValidatableResponse getApiResource(String basePath,  String resourceId) {
+		return RequestWithJwtToken()
+				.request(Method.GET, String.join("/", basePath, resourceId.toString()))
+				.then().statusCode(getMethodExpectedStatusCode(Method.PUT));
+	}
+	protected ValidatableResponse getAllApiResource(String basePath,  String resourceId) {
+		return RequestWithJwtToken()
+				.request(Method.GET, String.join("/", basePath))
+				.then().statusCode(getMethodExpectedStatusCode(Method.PUT));
+	}
+
+
+	
 
 	
 
