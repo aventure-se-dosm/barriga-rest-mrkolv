@@ -3,13 +3,13 @@ package rest.core.tests;
 import static io.restassured.RestAssured.given;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.codec.CharEncoding;
 import org.apache.http.HttpStatus;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import io.restassured.http.ContentType;
@@ -22,6 +22,8 @@ import rest.model.responses.ContaResponse;
 public class BarrigaTest extends BaseTest {
 
 	private static final Object INVALID_TOKEN = "INVALID_TOKEN";
+	private static final DateTimeFormatter DATE_FORMATTER_DD_MM_YY = DateTimeFormatter.ofPattern("dd/MM/YYYY");
+
 	private List<String> contasCriadasList;
 
 	public BarrigaTest() {
@@ -30,22 +32,11 @@ public class BarrigaTest extends BaseTest {
 
 	@Test
 	public void naoDeveAcessarApiSemToken() {
-		// seubarriga
-
-		// UserAuth userauth = new UserAuth("automation.dvmrkolv@gmail.com",
-		// "wXY2AUQXYy3gbeq");
 		given().log().all()
-
-				// .body(userauth)
-				// .header("token", INVALID_TOKEN)
-
-				.contentType(ContentType.JSON.withCharset(CharEncoding.UTF_8))
-				// .body(userauth)
-				// token: .contentType(ContentType.JSON.withCharset(CharEncoding.UTF_8))
-				.when().get("/contas").then().log().all()
-				// .body("error", is("Problemas com o login do usuário"))
-				.statusCode(HttpStatus.SC_UNAUTHORIZED);
-
+			.contentType(ContentType.JSON.withCharset(CharEncoding.UTF_8))
+		.when().get("/contas")
+		.then().log().all()
+		.statusCode(HttpStatus.SC_UNAUTHORIZED);
 	}
 
 	@Test
@@ -57,9 +48,8 @@ public class BarrigaTest extends BaseTest {
 	@Test
 	public void deveCriarConta() {
 
-		Integer idContaCriada = createApiResource(
-				"/contas", new ContaRequest(getNameWithTimeStampdSuffix("Nova Conta")))
-		.extract().path("id");
+		Integer idContaCriada = createApiResource("/contas",
+				new ContaRequest(getNameWithTimeStampdSuffix("Nova Conta"))).extract().path("id");
 		Assert.assertNotNull(idContaCriada);
 	}
 
@@ -67,17 +57,11 @@ public class BarrigaTest extends BaseTest {
 	public void deveAlterarUmaContaSalva() {
 
 		ContaResponse contaInalterada, contaAlterada;
-
 		ContaRequest contaReq = new ContaRequest(getNameWithTimeStampdSuffix("Conta Inalterada"));
-		
-		contaInalterada = createApiResource("/contas", contaReq)
-				.extract().body().as(ContaResponse.class);
 
+		contaInalterada = createApiResource("/contas", contaReq).extract().body().as(ContaResponse.class);
 		contaReq.setNome("ContaAlterada" + LocalDateTime.now().toString());
-		
-		contaAlterada = editApiResource("/contas", contaInalterada.getId(), contaReq)
-				.extract()
-				.body()
+		contaAlterada = editApiResource("/contas", contaInalterada.getId(), contaReq).extract().body()
 				.as(ContaResponse.class);
 		;
 
@@ -94,42 +78,56 @@ public class BarrigaTest extends BaseTest {
 	public void NãoDeveCriarContaComNomeRepetido() {
 
 		ContaRequest conta = new ContaRequest(String.join("_", "Conta", LocalDateTime.now().toString()));
-		RequestWithJwtToken().body(conta)
+		
+		RequestWithJwtToken()
+			.body(conta)
+		.when().post("/contas")
+		.then().log().all()
+		.statusCode(HttpStatus.SC_CREATED);
 
-				.when().post("/contas").then().log().all().statusCode(HttpStatus.SC_CREATED);
-
-		// TODO: Isolate too much repeated req codes on your right-ancestor class!
-		String erro = RequestWithJwtToken().body(conta).post("/contas").then().log().all()
-				.statusCode(HttpStatus.SC_BAD_REQUEST).extract().path("error").toString();
+		String erro = RequestWithJwtToken()
+			.body(conta)
+			.post("/contas")
+		.then().log().all()
+			.statusCode(HttpStatus.SC_BAD_REQUEST)
+			.extract().path("error").toString();
 		;
 		Assert.assertEquals(erro, "Já existe uma conta com esse nome!");
 	}
 
-	@Test @Ignore
+	@Test
 	public void deveIncluirUmaMovimentacao() {
+		TransacaoRequest transacaoReq;
+		ContaRequest conta = new ContaRequest(getNameWithTimeStampdSuffix("Conta Para Movimentação"));
 
-		ContaRequest conta = new ContaRequest(getNameWithTimeStampdSuffix("Conta Inalterada"));
-
-		String idContaCriada = RequestWithJwtToken().body(conta)
-			.when().post("/contas").then().log().all().statusCode(HttpStatus.SC_CREATED).extract()
-		.path("id").toString();
+		String idContaCriada = RequestWithJwtToken().body(conta).when().post("/contas").then().log().all()
+				.statusCode(HttpStatus.SC_CREATED).extract().path("id").toString();
 
 		Assert.assertNotNull(idContaCriada);
 		Assert.assertTrue(idContaCriada.length() > 0);
 
-		TransacaoRequest transacaoReq = new TransacaoRequest(Integer.parseInt(idContaCriada), "Depoósito para conta",
-				"Receptor", TipoTransacao.DES, LocalDateTime.now().minusDays(10), LocalDateTime.now(), 145.50f, true);
+		transacaoReq = new TransacaoRequest();
+		transacaoReq.setConta_id(Integer.parseInt(idContaCriada));
+		transacaoReq.setDescricao("Descrição de Movimentação");
+		transacaoReq.setEnvolvido("Envolvido na Movimentação");
+		transacaoReq.setTipo(TipoTransacao.REC);
+		transacaoReq.setData_transacao(LocalDateTime.now().format(DATE_FORMATTER_DD_MM_YY));
+		transacaoReq.setData_pagamento(LocalDateTime.now().format(DATE_FORMATTER_DD_MM_YY));
+		transacaoReq.setValor(100f);
+		transacaoReq.setStatus(true);
 
-		System.out.println(transacaoReq);
-		
-		throw new RuntimeException("This method implementation hasn't been finished");
+		createApiResource("/transacoes", transacaoReq);
+
+		// throw new RuntimeException("This method implementation hasn't been
+		// finished");
 	}
 
 	@Test
 	public void deveExcluirUmaConta() {
+		ContaRequest contaRequest = new ContaRequest("Conta a ser Excuida");
+		String newAccountId = createApiResource("/contas", contaRequest)
 
-		Integer newAccountId = createApiResource("/contas", new ContaRequest("Conta a ser Excuída")).extract()
-				.path("id");
+				.extract().path("id").toString();
 
 		deleteAPIResource("/contas", newAccountId);
 	}

@@ -11,12 +11,12 @@ public class ContaRequest {
 	}
 
 	public String setNome(String nome) {
-		// TODO Auto-generated method stub
+		
 		return (this.nome = nome);
 	}
 
 	public String getNome() {
-		// TODO Auto-generated method stub
+		
 		return this.nome;
 	}
 

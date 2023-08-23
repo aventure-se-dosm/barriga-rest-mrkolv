@@ -83,17 +83,24 @@ public class BaseTest implements Constants {
 	}
 	
 	
-	protected static RequestSpecification RequestWithJwtToken() {
+	protected static RequestSpecification RequestWithJwtTokenStatically() {
 		return  given().log().all()
 		 .contentType(ContentType.JSON.withCharset(CharEncoding.UTF_8))
 		.when()
 		.header(new Header("Authorization", getToken()));
 
 	}
+	protected static RequestSpecification RequestWithJwtToken() {
+		return  given().log().all()
+				.contentType(ContentType.JSON.withCharset(CharEncoding.UTF_8))
+				.when()
+				.header(new Header("Authorization", getToken()));
+		
+	}
 	
-	private static void applyStaticallyRequestMethodForAllResourcesId(Method method, String basepath ) {
+	private static  void applyStaticallyRequestMethodForAllResourcesId(Method method, String basepath ) {
 		List<String> allApiResourceId = 
-				RequestWithJwtToken()
+				RequestWithJwtTokenStatically()
 				.get(basepath)
 				.then().log().all()
 				.extract().jsonPath().getList("id");
@@ -163,10 +170,10 @@ public class BaseTest implements Constants {
 	protected ValidatableResponse createApiResource(String basePath,  Object requestBody) {
 		return RequestWithJwtToken()
 				.body(requestBody)
-				.request(Method.POST, String.join("/", basePath))
-				.then()
+				.request(Method.POST, basePath)
+				.then().log().all()
 				.statusCode(getMethodExpectedStatusCode(Method.POST))
-				;
+		;
 	}
 	
 	protected  ValidatableResponse  deleteAPIResource(String basePath, Object resourceId) {
@@ -183,7 +190,8 @@ public class BaseTest implements Constants {
 	protected ValidatableResponse getApiResource(String basePath,  String resourceId) {
 		return RequestWithJwtToken()
 				.request(Method.GET, String.join("/", basePath, resourceId.toString()))
-				.then().statusCode(getMethodExpectedStatusCode(Method.GET));
+				.then()
+				.statusCode(getMethodExpectedStatusCode(Method.GET));
 	}
 	protected ValidatableResponse getAllApiResource(String basePath) {
 		return RequestWithJwtToken()

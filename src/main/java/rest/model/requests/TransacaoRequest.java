@@ -1,144 +1,122 @@
 package rest.model.requests;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import rest.model.enums.TipoTransacao;
 
 public class TransacaoRequest {
-	private Integer conta_id;
-	private String descricao;
-	private String envolvido;
-	private TipoTransacao tipoTransacao;
-	private LocalDateTime data_transacao;
-	private LocalDateTime data_pagamento;
-	private Float valor;
+
+	private Integer id;
+	private String  descricao;
+	private String  envolvido;
+	private String  tipo;
+	private String  data_transacao;
+	private String  data_pagamento;
+	private Float   valor;
 	private Boolean status;
-	private Integer transferencia_id = null;
-	private Integer parcelamento_id = null;
-	private String observacao = null;
-
-	public TransacaoRequest(Integer conta_id, String descricao, String envolvido, TipoTransacao tipo,
-			LocalDateTime data_transacao, LocalDateTime data_pagamento, Float valor, Boolean status,
-			Integer transferencia_id, Integer parcelamento_id, String observacao) {
-
-		this.conta_id = conta_id;
+	private Integer conta_id;
+	private Integer usuario_id;
+	public TransacaoRequest(Integer id, String descricao, String envolvido, String tipo, String data_transacao,
+			String data_pagamento, Float valor, Boolean status, Integer conta_id, Integer usuario_id) {
+		super();
+		this.id = id;
 		this.descricao = descricao;
 		this.envolvido = envolvido;
-		this.tipoTransacao = tipo;
+		this.tipo = tipo;
 		this.data_transacao = data_transacao;
 		this.data_pagamento = data_pagamento;
 		this.valor = valor;
 		this.status = status;
-		this.transferencia_id = transferencia_id;
-		this.parcelamento_id = parcelamento_id;
-		this.observacao = observacao;
+		this.conta_id = conta_id;
+		this.usuario_id = usuario_id;
 	}
 
-	public TransacaoRequest(Integer conta_id, String descricao, String envolvido, TipoTransacao tipoTransacao,
-			LocalDateTime data_transacao, LocalDateTime data_pagamento, Float valor, Boolean status) {
-
-		this(conta_id, descricao, envolvido, tipoTransacao, data_transacao, data_pagamento, valor, status, null, null,
-				null);
-
+	public Integer getId() {
+		return id;
 	}
 
-	// Getter Methods
+	public void setId(Integer id) {
+		this.id = id;
+	}
 
 	public String getDescricao() {
 		return descricao;
+	}
+
+	public void setDescricao(String descricao) {
+		this.descricao = descricao;
 	}
 
 	public String getEnvolvido() {
 		return envolvido;
 	}
 
-	public String getObservacao() {
-		return observacao;
+	public void setEnvolvido(String envolvido) {
+		this.envolvido = envolvido;
 	}
 
-	public TipoTransacao getTipotransacao() {
-		return tipoTransacao;
+	public String getTipo() {
+		return tipo;
 	}
 
-	public LocalDateTime getData_transacao() {
+	public void setTipo(String tipo) {
+		this.tipo = tipo;
+	}
+	public void setTipo(Object tipo) {
+		setTipo(tipo.toString());
+	}
+
+	public String getData_transacao() {
 		return data_transacao;
 	}
 
-	public LocalDateTime getData_pagamento() {
+	public void setData_transacao(String data_transacao) {
+		this.data_transacao = data_transacao;
+	}
+
+	public String getData_pagamento() {
 		return data_pagamento;
+	}
+
+	public void setData_pagamento(String data_pagamento) {
+		this.data_pagamento = data_pagamento;
 	}
 
 	public Float getValor() {
 		return valor;
 	}
 
-	public boolean getStatus() {
+	public void setValor(Float valor) {
+		this.valor = valor;
+	}
+
+	public Boolean getStatus() {
 		return status;
+	}
+
+	public void setStatus(Boolean status) {
+		this.status = status;
 	}
 
 	public Integer getConta_id() {
 		return conta_id;
 	}
 
-	public Integer getconta_id() {
-		return conta_id;
-	}
-
-	public Integer getTransferencia_id() {
-		return transferencia_id;
-	}
-
-	public Integer getParcelamento_id() {
-		return parcelamento_id;
-	}
-
-	// Setter Methods
-
-	public void setDescricao(String descricao) {
-		this.descricao = descricao;
-	}
-
-	public void setEnvolvido(String envolvido) {
-		this.envolvido = envolvido;
-	}
-
-	public void setObservacao(String observacao) {
-		this.observacao = observacao;
-	}
-
-	public void setTipo(TipoTransacao tipoTransacao) {
-		this.tipoTransacao = tipoTransacao;
-	}
-
-	public void setData_transacao(LocalDateTime data_transacao) {
-		this.data_transacao = data_transacao;
-	}
-
-	public void setData_pagamento(LocalDateTime data_pagamento) {
-		this.data_pagamento = data_pagamento;
-	}
-
-	public void setValor(Float valor) {
-		this.valor = valor;
-	}
-
-	public void setStatus(boolean status) {
-		this.status = status;
-	}
-
 	public void setConta_id(Integer conta_id) {
 		this.conta_id = conta_id;
 	}
 
-	public void setconta_id(Integer conta_id) {
-		this.conta_id = conta_id;
+	public Integer getUsuario_id() {
+		return usuario_id;
 	}
 
-	public void setTransferencia_id(Integer transferencia_id) {
-		this.transferencia_id = transferencia_id;
+	public void setUsuario_id(Integer usuario_id) {
+		this.usuario_id = usuario_id;
 	}
 
-	public void setParcelamento_id(Integer parcelamento_id) {
-		this.parcelamento_id = parcelamento_id;
+	
+	public TransacaoRequest() {
+		// TODO Auto-generated constructor stub
 	}
 }
