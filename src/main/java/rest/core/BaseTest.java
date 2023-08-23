@@ -1,7 +1,6 @@
 package rest.core;
 
 import static io.restassured.RestAssured.given;
-import static io.restassured.http.Method.*;
 
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
@@ -9,7 +8,6 @@ import java.util.List;
 
 import org.apache.commons.codec.CharEncoding;
 import org.apache.http.HttpStatus;
-import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -141,7 +139,7 @@ public class BaseTest implements Constants {
 		//case OPTIONS: return HttpStatus.SC_OK;
 		//case PATCH: return HttpStatus.SC_OK;
 		case POST: return HttpStatus.SC_CREATED;
-		case PUT: return HttpStatus.SC_ACCEPTED;
+		case PUT: return HttpStatus.SC_OK;
 		//case TRACE: return HttpStatus.SC_OK;
 		default: throw new InvalidParameterException(String.format("Método não reconhecido: [%s]", method.toString()));
 		
@@ -161,11 +159,6 @@ public class BaseTest implements Constants {
 		return cookie.split("=")[1].split(";")[0];
 	}
 	
-	protected  ValidatableResponse  deleteAPIResource(String basePath, Object resourceId) {
-		return RequestWithJwtToken()		
-				.request(Method.DELETE, String.join("/", basePath, resourceId.toString()))
-				.then().statusCode(getMethodExpectedStatusCode(Method.DELETE));
-	}
 	
 	protected ValidatableResponse createApiResource(String basePath,  Object requestBody) {
 		return RequestWithJwtToken()
@@ -175,21 +168,27 @@ public class BaseTest implements Constants {
 				.statusCode(getMethodExpectedStatusCode(Method.POST))
 				;
 	}
-	protected ValidatableResponse editApiResource(String basePath,  Object requestBody) {
+	
+	protected  ValidatableResponse  deleteAPIResource(String basePath, Object resourceId) {
+		return RequestWithJwtToken()		
+				.request(Method.DELETE, String.join("/", basePath, resourceId.toString()))
+				.then().statusCode(getMethodExpectedStatusCode(Method.DELETE));
+	}
+	protected ValidatableResponse editApiResource(String basePath,  Object resourceId, Object requestBody) {
 		return RequestWithJwtToken()
 				.body(requestBody)
-				.request(Method.PUT, String.join("/", basePath))
+				.request(Method.PUT, String.join("/", basePath, resourceId.toString()))
 				.then().statusCode(getMethodExpectedStatusCode(Method.PUT));
 	}
 	protected ValidatableResponse getApiResource(String basePath,  String resourceId) {
 		return RequestWithJwtToken()
 				.request(Method.GET, String.join("/", basePath, resourceId.toString()))
-				.then().statusCode(getMethodExpectedStatusCode(Method.PUT));
+				.then().statusCode(getMethodExpectedStatusCode(Method.GET));
 	}
-	protected ValidatableResponse getAllApiResource(String basePath,  String resourceId) {
+	protected ValidatableResponse getAllApiResource(String basePath) {
 		return RequestWithJwtToken()
 				.request(Method.GET, String.join("/", basePath))
-				.then().statusCode(getMethodExpectedStatusCode(Method.PUT));
+				.then().statusCode(getMethodExpectedStatusCode(Method.GET));
 	}
 
 

@@ -1,5 +1,9 @@
 package rest.model.responses;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter @Setter
 public class ContaResponse {
 	public Integer id;
 	public	Integer usuario_id;
@@ -13,18 +17,18 @@ public class ContaResponse {
 		setId(id);
 		setNome(nome);
 		setUsuarioId(usuario_id);
-		setVisible(visivel);
+		setvisivel(visivel);
 	}
 
-	private Integer setId(Integer id) {
+	public Integer setId(Integer id) {
 		return this.id = id;
 	}
 
-	private String setVisible(String visivel) {
+	public String setvisivel(String visivel) {
 		return this.visivel = visivel;
 	}
 
-	private Integer setUsuarioId(Integer usuario_id) {
+	public Integer setUsuarioId(Integer usuario_id) {
 		return this.usuario_id = usuario_id;
 	}
 
@@ -40,7 +44,7 @@ public class ContaResponse {
 		return this.nome;
 	}
 
-	public String isVisible() {
+	public String isvisivel() {
 		return this.visivel;
 	}
 
