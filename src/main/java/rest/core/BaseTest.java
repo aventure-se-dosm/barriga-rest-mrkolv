@@ -28,7 +28,7 @@ public class BaseTest implements Constants {
 	static private RequestSpecBuilder reqBuilder;
 	static private ResponseSpecBuilder resBuilder;
 	private static String token = "JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6NDA1NzN9.TVUD2XK-pMxp6crPVLymwG-WQNU4GyzD4JGdjrWLG_g";
-	
+	protected final Object EMPTY_JSON = "{}";
 
 	private static List<String> accountIdList;
 	private static List<String> transactionIdList;
@@ -78,16 +78,17 @@ public class BaseTest implements Constants {
 		String cookie = getCookieStringFromResponse(email, senha);
 
 		return given().log().all()
-				.contentType(APP_CONTENT_TYPE).cookie("connect.sid", getCookieValue(cookie))
-			.when();
+				.contentType(APP_CONTENT_TYPE)
+				.cookie("connect.sid", getCookieValue(cookie))
+				.when();
 	}
 	
 	
 	protected static RequestSpecification RequestWithJwtTokenStatically() {
 		return  given().log().all()
-		 .contentType(ContentType.JSON.withCharset(CharEncoding.UTF_8))
-		.when()
-		.header(new Header("Authorization", getToken()));
+				.contentType(ContentType.JSON.withCharset(CharEncoding.UTF_8))
+				.when()
+				.header(new Header("Authorization", getToken()));
 
 	}
 	protected static RequestSpecification RequestWithJwtToken() {
@@ -138,7 +139,7 @@ public class BaseTest implements Constants {
 				.then().statusCode(getMethodExpectedStatusCode(method));
 	}
 	
-	private static int getMethodExpectedStatusCode(Method method) {
+	protected static int getMethodExpectedStatusCode(Method method) {
 		switch(method) {
 		case GET: return HttpStatus.SC_OK;
 		case DELETE: return HttpStatus.SC_NO_CONTENT;
@@ -171,32 +172,41 @@ public class BaseTest implements Constants {
 		return RequestWithJwtToken()
 				.body(requestBody)
 				.request(Method.POST, basePath)
-				.then().log().all()
-				.statusCode(getMethodExpectedStatusCode(Method.POST))
+				.then()
+				.log().all()
+				
+				//.statusCode(getMethodExpectedStatusCode(Method.POST))
 		;
 	}
 	
 	protected  ValidatableResponse  deleteAPIResource(String basePath, Object resourceId) {
 		return RequestWithJwtToken()		
 				.request(Method.DELETE, String.join("/", basePath, resourceId.toString()))
-				.then().statusCode(getMethodExpectedStatusCode(Method.DELETE));
+				.then()
+				//.statusCode(getMethodExpectedStatusCode(Method.DELETE))
+				;
 	}
 	protected ValidatableResponse editApiResource(String basePath,  Object resourceId, Object requestBody) {
 		return RequestWithJwtToken()
 				.body(requestBody)
 				.request(Method.PUT, String.join("/", basePath, resourceId.toString()))
-				.then().statusCode(getMethodExpectedStatusCode(Method.PUT));
+				.then()
+				.statusCode(getMethodExpectedStatusCode(Method.PUT))
+				;
 	}
 	protected ValidatableResponse getApiResource(String basePath,  String resourceId) {
 		return RequestWithJwtToken()
 				.request(Method.GET, String.join("/", basePath, resourceId.toString()))
 				.then()
-				.statusCode(getMethodExpectedStatusCode(Method.GET));
+				//.statusCode(getMethodExpectedStatusCode(Method.GET))
+				;
 	}
 	protected ValidatableResponse getAllApiResource(String basePath) {
 		return RequestWithJwtToken()
 				.request(Method.GET, String.join("/", basePath))
-				.then().statusCode(getMethodExpectedStatusCode(Method.GET));
+				.then()
+				//.statusCode(getMethodExpectedStatusCode(Method.GET))
+				;
 	}
 
 

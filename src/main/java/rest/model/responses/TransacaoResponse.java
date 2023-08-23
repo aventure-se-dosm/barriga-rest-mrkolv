@@ -29,6 +29,7 @@ public class TransacaoResponse {
 	private Float usuario_id;
 	private String transferencia_id = null;
 	private String parcelamento_id = null;
+	
 
 	// Getter Methods
 

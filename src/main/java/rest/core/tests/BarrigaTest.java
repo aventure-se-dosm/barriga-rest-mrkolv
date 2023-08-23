@@ -1,6 +1,7 @@
 package rest.core.tests;
 
-import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.*;
+import static org.hamcrest.Matchers.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -10,9 +11,11 @@ import java.util.List;
 import org.apache.commons.codec.CharEncoding;
 import org.apache.http.HttpStatus;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import io.restassured.http.ContentType;
+import io.restassured.http.Method;
 import rest.core.BaseTest;
 import rest.model.enums.TipoTransacao;
 import rest.model.requests.ContaRequest;
@@ -41,7 +44,6 @@ public class BarrigaTest extends BaseTest {
 
 	@Test
 	public void deveListarContas() {
-
 		getAllApiResource("/contas");
 	}
 
@@ -77,18 +79,18 @@ public class BarrigaTest extends BaseTest {
 	@Test
 	public void NãoDeveCriarContaComNomeRepetido() {
 
+		//'nome' e 'conta_id' são OS campo obrigatórios
+		
 		ContaRequest conta = new ContaRequest(String.join("_", "Conta", LocalDateTime.now().toString()));
 		
-		RequestWithJwtToken()
-			.body(conta)
-		.when().post("/contas")
-		.then().log().all()
+//		RequestWithJwtToken()
+//			.body(conta)
+//		.when().post("/contas")
+//		.then().log().all()
+		createApiResource("/contas", conta)
 		.statusCode(HttpStatus.SC_CREATED);
 
-		String erro = RequestWithJwtToken()
-			.body(conta)
-			.post("/contas")
-		.then().log().all()
+		String erro = createApiResource("/contas", conta)
 			.statusCode(HttpStatus.SC_BAD_REQUEST)
 			.extract().path("error").toString();
 		;
@@ -117,19 +119,96 @@ public class BarrigaTest extends BaseTest {
 		transacaoReq.setStatus(true);
 
 		createApiResource("/transacoes", transacaoReq);
+	}
+	
+	@Test
+	public void naoDeveIncluirUmaMovimentacaoComDataDeTransacaoFutura() {
+		TransacaoRequest transacaoReq;
+		ContaRequest conta = new ContaRequest(getNameWithTimeStampdSuffix("Conta Para Movimentação com Data Atrasada"));
+		
+		String idContaCriada = //RequestWithJwtToken().body(conta).when().post("/contas").then().log().all()
+				createApiResource("/contas", conta)
+				.statusCode(HttpStatus.SC_CREATED).extract().path("id").toString();
+		
+		Assert.assertNotNull(idContaCriada);
+		Assert.assertTrue(idContaCriada.length() > 0);
+		
+		transacaoReq = new TransacaoRequest();
+		transacaoReq.setConta_id(Integer.parseInt(idContaCriada));
+		transacaoReq.setDescricao("Descrição de Movimentação");
+		transacaoReq.setEnvolvido("Envolvido na Movimentação");
+		transacaoReq.setTipo(TipoTransacao.REC);
+		transacaoReq.setData_transacao(LocalDateTime.now().plusYears(10).format(DATE_FORMATTER_DD_MM_YY));
+		transacaoReq.setData_pagamento(LocalDateTime.now().format(DATE_FORMATTER_DD_MM_YY));
+		transacaoReq.setValor(100f);
+		transacaoReq.setStatus(true);
+		
+		createApiResource("/transacoes", transacaoReq)
+		.statusCode(HttpStatus.SC_BAD_REQUEST);
+	}
+	@Test
+	public void naoDeveRemoverUmaContaComTransacao() {
+		TransacaoRequest transacaoReq;
+		ContaRequest conta = new ContaRequest(getNameWithTimeStampdSuffix("Conta Para Movimentação com Data Atrasada"));
+		
+		String idContaCriada = 
+				createApiResource("/contas", conta)
+				.statusCode(HttpStatus.SC_CREATED).extract().path("id").toString();
+		
+		Assert.assertNotNull(idContaCriada);
+		Assert.assertTrue(idContaCriada.length() > 0);
+		
+		transacaoReq = new TransacaoRequest();
+		transacaoReq.setConta_id(Integer.parseInt(idContaCriada));
+		transacaoReq.setDescricao("Descrição de Movimentação");
+		transacaoReq.setEnvolvido("Envolvido na Movimentação");
+		transacaoReq.setTipo(TipoTransacao.REC);
+		transacaoReq.setData_transacao(LocalDateTime.now().minusDays(10).format(DATE_FORMATTER_DD_MM_YY));
+		transacaoReq.setData_pagamento(LocalDateTime.now().plusDays(8).format(DATE_FORMATTER_DD_MM_YY));
+		transacaoReq.setValor(100f);
+		transacaoReq.setStatus(true);
+		
+		createApiResource("/transacoes", transacaoReq)
+		.statusCode(getMethodExpectedStatusCode(Method.POST));
+		deleteAPIResource("/contas", idContaCriada)
+		.body("name", is("error"))
+		.body("constraint", is("transacoes_conta_id_foreign"))
+		.statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+		;
+	}
+	
+	@Test
+	public void deveValidarCamposObrigatoriosNaMovimentacao() {
+		ContaRequest conta = new ContaRequest(getNameWithTimeStampdSuffix("Conta Para Movimentação com Data Atrasada"));
 
-		// throw new RuntimeException("This method implementation hasn't been
-		// finished");
+		createApiResource("/contas", conta);
+		
+//		TransacaoRequest transacaoReq = new TransacaoRequest();
+//		//transacaoReq.setConta_id(Integer.parseInt(idContaCriada));
+//		transacaoReq.setDescricao("Descrição de Movimentação");
+//		transacaoReq.setEnvolvido("Envolvido na Movimentação");
+//		transacaoReq.setTipo(TipoTransacao.REC);
+//		transacaoReq.setData_transacao(LocalDateTime.now().minusDays(10).format(DATE_FORMATTER_DD_MM_YY));
+//		transacaoReq.setData_pagamento(LocalDateTime.now().plusDays(8).format(DATE_FORMATTER_DD_MM_YY));
+//		transacaoReq.setValor(100f);
+//		transacaoReq.setStatus(true);
+		createApiResource("/transacoes", EMPTY_JSON)
+		.statusCode(HttpStatus.SC_BAD_REQUEST)
+		;
+		
+		
+		
 	}
 
 	@Test
 	public void deveExcluirUmaConta() {
 		ContaRequest contaRequest = new ContaRequest("Conta a ser Excuida");
 		String newAccountId = createApiResource("/contas", contaRequest)
-
+				.statusCode(getMethodExpectedStatusCode(Method.POST))
 				.extract().path("id").toString();
-
 		deleteAPIResource("/contas", newAccountId);
 	}
+	
+	
 
 }

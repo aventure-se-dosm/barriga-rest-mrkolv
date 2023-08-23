@@ -31,6 +31,10 @@ public class TransacaoRequest {
 		this.conta_id = conta_id;
 		this.usuario_id = usuario_id;
 	}
+		
+	public TransacaoRequest() {
+		
+	}
 
 	public Integer getId() {
 		return id;
@@ -113,10 +117,5 @@ public class TransacaoRequest {
 
 	public void setUsuario_id(Integer usuario_id) {
 		this.usuario_id = usuario_id;
-	}
-
-	
-	public TransacaoRequest() {
-		// TODO Auto-generated constructor stub
 	}
 }
