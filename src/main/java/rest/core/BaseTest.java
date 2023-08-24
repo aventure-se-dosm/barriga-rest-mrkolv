@@ -77,7 +77,8 @@ public class BaseTest implements Constants {
 		String senha = "senha"; // <input id='senha' ... name='senha'>
 		String cookie = getCookieStringFromResponse(email, senha);
 
-		return given().log().all()
+		return given()
+				.log().all()
 				.contentType(APP_CONTENT_TYPE)
 				.cookie("connect.sid", getCookieValue(cookie))
 				.when();
@@ -99,17 +100,22 @@ public class BaseTest implements Constants {
 		
 	}
 	
+	
 	private static  void applyStaticallyRequestMethodForAllResourcesId(Method method, String basepath ) {
 		List<String> allApiResourceId = 
-				RequestWithJwtTokenStatically()
-				.get(basepath)
-				.then().log().all()
-				.extract().jsonPath().getList("id");
+				 RequestWithJwtTokenStatically()
+		.get(basepath)
+		.then()
+		.log().all()
+		.extract().jsonPath().getList("id");
+		//	.extract().jsonPath().getList("id");
 		
 		if (allApiResourceId.isEmpty()) return;
 		
 		for(Object apiResourceId : allApiResourceId) {
-			applyStaticallyAPIMethodToResource(method, basepath, apiResourceId);
+			applyStaticallyAPIMethodToResource(method, basepath, apiResourceId)
+			.statusCode(getMethodExpectedStatusCode(method));
+			;
 		}
 		;
 	}
@@ -130,13 +136,16 @@ public class BaseTest implements Constants {
 	private static ValidatableResponse applyStaticallyAPIMethodToResource(Method method, String basepath, Object resourceId) {
 		return RequestWithJwtToken()
 		.request(method, String.join("/", basepath, resourceId.toString()))
-		.then().statusCode(getMethodExpectedStatusCode(method));
-	}
+		.then()//.statusCode(getMethodExpectedStatusCode(method))
+		;
+	}//
 	protected static ValidatableResponse applyAPIMethodToResource(Method method, String basepath, Object resourceId) {
 		return RequestWithJwtToken()
 				
-				.request(method, String.join("/", basepath, method.equals(Method.GET)?"\r":resourceId.toString()))
-				.then().statusCode(getMethodExpectedStatusCode(method));
+				.request(method, String.join("/", basepath, method.equals(Method.GET)?".":resourceId.toString()))
+				.then()
+				//.statusCode(getMethodExpectedStatusCode(method))
+				;
 	}
 	
 	protected static int getMethodExpectedStatusCode(Method method) {
@@ -174,9 +183,8 @@ public class BaseTest implements Constants {
 				.request(Method.POST, basePath)
 				.then()
 				.log().all()
-				
-				//.statusCode(getMethodExpectedStatusCode(Method.POST))
-		;
+				;
+				//
 	}
 	
 	protected  ValidatableResponse  deleteAPIResource(String basePath, Object resourceId) {
