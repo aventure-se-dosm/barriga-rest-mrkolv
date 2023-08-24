@@ -6,13 +6,14 @@ import static org.hamcrest.Matchers.is;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
 
 import org.apache.commons.codec.CharEncoding;
 import org.apache.http.HttpStatus;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import io.restassured.http.ContentType;
@@ -22,7 +23,6 @@ import rest.model.enums.TipoTransacao;
 import rest.model.requests.ContaRequest;
 import rest.model.requests.TransacaoRequest;
 import rest.model.responses.ContaResponse;
-import rest.model.responses.TransacaoResponse;
 
 public class BarrigaTest extends BaseTest {
 
@@ -72,20 +72,12 @@ public class BarrigaTest extends BaseTest {
 	}
 
 	private String getNameWithTimeStampdSuffix(String string) {
-		return String.join("_", LocalDateTime.now().toString());
+		return String.join("_", string, LocalDateTime.now().toString());
 	}
 
 	@Test
 	public void NãoDeveCriarContaComNomeRepetido() {
-
-		// 'nome' e 'conta_id' são OS campo obrigatórios
-
 		ContaRequest conta = new ContaRequest(String.join("_", "Conta", LocalDateTime.now().toString()));
-
-//		RequestWithJwtToken()
-//			.body(conta)
-//		.when().post("/contas")
-//		.then().log().all()
 		createApiResource("/contas", conta).statusCode(HttpStatus.SC_CREATED);
 
 		String erro = createApiResource("/contas", conta).statusCode(HttpStatus.SC_BAD_REQUEST).extract().path("error")
@@ -170,26 +162,17 @@ public class BarrigaTest extends BaseTest {
 
 	@Test
 	public void deveValidarCamposObrigatoriosNaMovimentacao() {
+
 		ContaRequest conta = new ContaRequest(getNameWithTimeStampdSuffix("Conta Para Movimentação com Data Atrasada"));
 		createApiResource("/contas", conta);
 		// TODO: Validar campos obrigatórios do conta
-		List<Object> listaMsg = createApiResource("/transacoes", EMPTY_JSON).statusCode(HttpStatus.SC_BAD_REQUEST)
-				.log().all().statusCode(400)
-		.extract().jsonPath().getList("msg");
-		
+		List<Object> listaMsg = createApiResource("/transacoes", EMPTY_JSON).statusCode(HttpStatus.SC_BAD_REQUEST).log()
+				.all().statusCode(400).extract().jsonPath().getList("msg");
+
 		Assert.assertTrue(listaMsg.containsAll(Arrays.asList("Data da Movimentação é obrigatório",
-				"Data do pagamento é obrigatório",
-				"Descrição é obrigatório",
-				"Interessado é obrigatório",
-				"Valor é obrigatório",
-				"Valor deve ser um número",
-				"Conta é obrigatório",
-				"Situação é obrigatório")));
-		
-		
-;
+				"Data do pagamento é obrigatório", "Descrição é obrigatório", "Interessado é obrigatório",
+				"Valor é obrigatório", "Valor deve ser um número", "Conta é obrigatório", "Situação é obrigatório")));
 		listaMsg.forEach(o -> System.out.println(o));
-		System.out.println("hel");
 	}
 
 	@Test
@@ -198,6 +181,62 @@ public class BarrigaTest extends BaseTest {
 		String newAccountId = createApiResource("/contas", contaRequest)
 				.statusCode(getMethodExpectedStatusCode(Method.POST)).extract().path("id").toString();
 		deleteAPIResource("/contas", newAccountId).statusCode(getMethodExpectedStatusCode(Method.DELETE));
+	}
+
+	@Test 
+	public void deveCalcularSaldoTotal() {
+		
+		TransacaoRequest transacaoReq1, transacaoReq2;
+		
+		ContaRequest conta1 = new ContaRequest(getNameWithTimeStampdSuffix("Conta José"));
+		ContaRequest conta2 = new ContaRequest(getNameWithTimeStampdSuffix("Conta Maria"));
+		
+		ContaResponse ContaCriada1 = createApiResource("/contas", conta1)
+				.extract().body().as(ContaResponse.class);
+		
+		ContaResponse ContaCriada2 = createApiResource("/contas", conta2)
+				.extract().body().as(ContaResponse.class);
+		
+		
+		
+//				;;createApiResource("/contas", conta2);
+		
+		transacaoReq1 = new TransacaoRequest();
+		transacaoReq1.setConta_id(ContaCriada1.getId());
+		transacaoReq1.setDescricao("Maria Silva");
+		transacaoReq1.setEnvolvido("Corporativo");
+		transacaoReq1.setTipo(TipoTransacao.REC);
+		transacaoReq1.setData_transacao(LocalDateTime.now().minusDays(10).format(DATE_FORMATTER_DD_MM_YY));
+		transacaoReq1.setData_pagamento(LocalDateTime.now().plusDays(8).format(DATE_FORMATTER_DD_MM_YY));
+		transacaoReq1.setValor(5000.00f);
+		transacaoReq1.setStatus(true);
+		
+		transacaoReq2 = new TransacaoRequest();
+		transacaoReq2.setConta_id(ContaCriada2.getId());
+		transacaoReq2.setDescricao("Pensão José");
+		transacaoReq2.setEnvolvido("José Herculano");
+		transacaoReq2.setTipo(TipoTransacao.REC);
+		transacaoReq2.setData_transacao(LocalDateTime.now().minusDays(10).format(DATE_FORMATTER_DD_MM_YY));
+		transacaoReq2.setData_pagamento(LocalDateTime.now().plusDays(8).format(DATE_FORMATTER_DD_MM_YY));
+		transacaoReq2.setValor(5000.00f);
+		transacaoReq2.setStatus(true);
+		
+		createApiResource("/contas", conta1);
+		createApiResource("/contas", conta2);
+
+		createApiResource("/transacoes", transacaoReq1);
+		createApiResource("/transacoes", transacaoReq2);
+
+		 float total = getAllApiResource("/saldo").extract().jsonPath().getList("saldo").stream().map(o -> Float.parseFloat(o.toString()))
+				 .reduce((x,y) -> (x+y)).get();
+		Assert.assertNotNull(total);
+		Assert.assertTrue(total == 10000.00f);
+		
+	}
+
+	@Test
+	@Ignore
+	public void deveCalcularSaldoTotalDeUmUsuário() {
 	}
 
 }
