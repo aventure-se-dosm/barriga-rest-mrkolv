@@ -3,7 +3,7 @@ package rest.model.enums;
 public enum TipoTransacao {
 	
 	REC("receber"),
-	DES("despesa");
+	DESP("despesa");
 	
 	private String transacaoString;
 	private TipoTransacao(String transacaoString) {

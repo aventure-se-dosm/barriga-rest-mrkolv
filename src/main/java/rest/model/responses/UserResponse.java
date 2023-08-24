@@ -1,4 +1,4 @@
-package rest.model.requests;
+package rest.model.responses;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -7,7 +7,7 @@ import lombok.experimental.PackagePrivate;
 @Getter
 @Setter
 @PackagePrivate
-public class UserRequest {
+public class UserResponse{
 
 	String user;
 	String senha;
