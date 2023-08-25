@@ -26,11 +26,9 @@ import rest.model.responses.ContaResponse;
 
 public class BarrigaTest extends BaseTest {
 
-	// private static final Object INVALID_TOKEN = "INVALID_TOKEN";
 	private static final DateTimeFormatter DATE_FORMATTER_DD_MM_YY = DateTimeFormatter.ofPattern("dd/MM/YYYY");
 
 	public BarrigaTest() {
-		// this.contasCriadasList = new ArrayList<>();
 	}
 
 	@Test
@@ -107,7 +105,8 @@ public class BarrigaTest extends BaseTest {
 		transacaoReq.setValor(100f);
 		transacaoReq.setStatus(true);
 
-		createApiResource("/transacoes", transacaoReq);
+		createApiResource("/transacoes", transacaoReq)
+		.statusCode(getMethodExpectedStatusCode(Method.POST));
 	}
 
 	@Test
@@ -115,8 +114,8 @@ public class BarrigaTest extends BaseTest {
 		TransacaoRequest transacaoReq;
 		ContaRequest conta = new ContaRequest(getNameWithTimeStampdSuffix("Conta Para Movimentação com Data Atrasada"));
 
-		String idContaCriada = // RequestWithJwtToken().body(conta).when().post("/contas").then().log().all()
-				createApiResource("/contas", conta).statusCode(HttpStatus.SC_CREATED).extract().path("id").toString();
+		String idContaCriada = createApiResource("/contas", conta)
+				.statusCode(HttpStatus.SC_CREATED).extract().path("id").toString();
 
 		Assert.assertNotNull(idContaCriada);
 		Assert.assertTrue(idContaCriada.length() > 0);
@@ -128,7 +127,7 @@ public class BarrigaTest extends BaseTest {
 		transacaoReq.setTipo(TipoTransacao.REC);
 		transacaoReq.setData_transacao(LocalDateTime.now().plusYears(10).format(DATE_FORMATTER_DD_MM_YY));
 		transacaoReq.setData_pagamento(LocalDateTime.now().format(DATE_FORMATTER_DD_MM_YY));
-		transacaoReq.setValor(100f);
+		transacaoReq.setValor(200f);
 		transacaoReq.setStatus(true);
 
 		createApiResource("/transacoes", transacaoReq).statusCode(HttpStatus.SC_BAD_REQUEST);
@@ -164,8 +163,8 @@ public class BarrigaTest extends BaseTest {
 	public void deveValidarCamposObrigatoriosNaMovimentacao() {
 
 		ContaRequest conta = new ContaRequest(getNameWithTimeStampdSuffix("Conta Para Movimentação com Data Atrasada"));
+		
 		createApiResource("/contas", conta);
-		// TODO: Validar campos obrigatórios do conta
 		List<Object> listaMsg = createApiResource("/transacoes", EMPTY_JSON).statusCode(HttpStatus.SC_BAD_REQUEST).log()
 				.all().statusCode(400).extract().jsonPath().getList("msg");
 
@@ -186,11 +185,12 @@ public class BarrigaTest extends BaseTest {
 	@Test 
 	public void deveCalcularSaldoTotal() {
 		
+		cleanUpApiCreatedTestDataMass();
+		
 		TransacaoRequest transacaoReq1, transacaoReq2;
 		
 		ContaRequest conta1 = new ContaRequest(getNameWithTimeStampdSuffix("Conta José"));
 		ContaRequest conta2 = new ContaRequest(getNameWithTimeStampdSuffix("Conta Maria"));
-		
 		ContaResponse ContaCriada1 = createApiResource("/contas", conta1)
 				.extract().body().as(ContaResponse.class);
 		
@@ -228,15 +228,10 @@ public class BarrigaTest extends BaseTest {
 		createApiResource("/transacoes", transacaoReq2);
 
 		 float total = getAllApiResource("/saldo").extract().jsonPath().getList("saldo").stream().map(o -> Float.parseFloat(o.toString()))
-				 .reduce((x,y) -> (x+y)).get();
+				 .reduce(0f, (x,y) -> x+y).floatValue();
 		Assert.assertNotNull(total);
-		Assert.assertTrue(total == 10000.00f);
+		Assert.assertTrue("Total: "+total, total == 10000f);
 		
-	}
-
-	@Test
-	@Ignore
-	public void deveCalcularSaldoTotalDeUmUsuário() {
 	}
 
 }

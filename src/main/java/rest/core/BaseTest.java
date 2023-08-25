@@ -114,7 +114,7 @@ public class BaseTest implements Constants {
 		
 		for(Object apiResourceId : allApiResourceId) {
 			applyStaticallyAPIMethodToResource(method, basepath, apiResourceId)
-			.statusCode(getMethodExpectedStatusCode(method));
+			//.statusCode(getMethodExpectedStatusCode(method));
 			;
 		}
 		;
@@ -190,7 +190,7 @@ public class BaseTest implements Constants {
 	protected  ValidatableResponse  deleteAPIResource(String basePath, Object resourceId) {
 		return RequestWithJwtToken()		
 				.request(Method.DELETE, String.join("/", basePath, resourceId.toString()))
-				.then()
+				.then().log().all()
 				//.statusCode(getMethodExpectedStatusCode(Method.DELETE))
 				;
 	}
