@@ -7,13 +7,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
 
 import org.apache.commons.codec.CharEncoding;
 import org.apache.http.HttpStatus;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import io.restassured.http.ContentType;
@@ -29,6 +26,7 @@ public class BarrigaTest extends BaseTest {
 	private static final DateTimeFormatter DATE_FORMATTER_DD_MM_YY = DateTimeFormatter.ofPattern("dd/MM/YYYY");
 
 	public BarrigaTest() {
+		
 	}
 
 	@Test
@@ -39,14 +37,18 @@ public class BarrigaTest extends BaseTest {
 
 	@Test
 	public void deveListarContas() {
-		getAllApiResource("/contas");
+		getAllApiResource("/contas")
+		.statusCode(getMethodExpectedStatusCode(Method.GET));
 	}
 
 	@Test
 	public void deveCriarConta() {
 
 		Integer idContaCriada = createApiResource("/contas",
-				new ContaRequest(getNameWithTimeStampdSuffix("Nova Conta"))).extract().path("id");
+				new ContaRequest(getNameWithTimeStampdSuffix("Nova Conta")))
+				.statusCode(getMethodExpectedStatusCode(Method.POST))
+				.extract().path("id")
+				;
 
 		Assert.assertNotNull(idContaCriada);
 	}
@@ -57,11 +59,14 @@ public class BarrigaTest extends BaseTest {
 		ContaResponse contaInalterada, contaAlterada;
 		ContaRequest contaReq = new ContaRequest(getNameWithTimeStampdSuffix("Conta Inalterada"));
 
-		contaInalterada = createApiResource("/contas", contaReq).extract().body().as(ContaResponse.class);
+		contaInalterada = createApiResource("/contas", contaReq)
+				.extract().body().as(ContaResponse.class);
+		
 		contaReq.setNome("ContaAlterada" + LocalDateTime.now().toString());
 
 		contaAlterada = editApiResource("/contas", contaInalterada.getId(), contaReq)
-				.statusCode(getMethodExpectedStatusCode(Method.PUT)).extract().body().as(ContaResponse.class);
+				.statusCode(getMethodExpectedStatusCode(Method.PUT))
+				.extract().body().as(ContaResponse.class);
 		;
 
 		Assert.assertEquals(contaInalterada.getId(), contaAlterada.getId());
@@ -78,8 +83,10 @@ public class BarrigaTest extends BaseTest {
 		ContaRequest conta = new ContaRequest(String.join("_", "Conta", LocalDateTime.now().toString()));
 		createApiResource("/contas", conta).statusCode(HttpStatus.SC_CREATED);
 
-		String erro = createApiResource("/contas", conta).statusCode(HttpStatus.SC_BAD_REQUEST).extract().path("error")
-				.toString();
+		String erro = createApiResource("/contas", conta)
+				.statusCode(HttpStatus.SC_BAD_REQUEST)
+				.extract()
+				.path("error").toString();
 		;
 		Assert.assertEquals(erro, "Já existe uma conta com esse nome!");
 	}
@@ -89,14 +96,16 @@ public class BarrigaTest extends BaseTest {
 		TransacaoRequest transacaoReq;
 		ContaRequest conta = new ContaRequest(getNameWithTimeStampdSuffix("Conta Para Movimentação"));
 
-		String idContaCriada = RequestWithJwtToken().body(conta).when().post("/contas").then().log().all()
-				.statusCode(HttpStatus.SC_CREATED).extract().path("id").toString();
+		Integer idContaCriada = createApiResource("/contas", conta)
+				.statusCode(HttpStatus.SC_CREATED)
+				.extract().jsonPath().getInt("id");
 
 		Assert.assertNotNull(idContaCriada);
-		Assert.assertTrue(idContaCriada.length() > 0);
-
+		Assert.assertTrue(idContaCriada > 0);
+		
+		
 		transacaoReq = new TransacaoRequest();
-		transacaoReq.setConta_id(Integer.parseInt(idContaCriada));
+		transacaoReq.setConta_id(idContaCriada);
 		transacaoReq.setDescricao("Descrição de Movimentação");
 		transacaoReq.setEnvolvido("Envolvido na Movimentação");
 		transacaoReq.setTipo(TipoTransacao.REC);
@@ -163,23 +172,38 @@ public class BarrigaTest extends BaseTest {
 	public void deveValidarCamposObrigatoriosNaMovimentacao() {
 
 		ContaRequest conta = new ContaRequest(getNameWithTimeStampdSuffix("Conta Para Movimentação com Data Atrasada"));
-		
 		createApiResource("/contas", conta);
+		
+		List<String> allRequiredFieldsMsg = Arrays.asList(
+				"Data da Movimentação é obrigatório",
+				"Data do pagamento é obrigatório",
+				"Descrição é obrigatório",
+				"Interessado é obrigatório",
+				"Valor é obrigatório",
+				"Valor deve ser um número",
+				"Conta é obrigatório",
+				"Situação é obrigatório"
+			);
+		
 		List<Object> listaMsg = createApiResource("/transacoes", EMPTY_JSON).statusCode(HttpStatus.SC_BAD_REQUEST).log()
 				.all().statusCode(400).extract().jsonPath().getList("msg");
 
-		Assert.assertTrue(listaMsg.containsAll(Arrays.asList("Data da Movimentação é obrigatório",
-				"Data do pagamento é obrigatório", "Descrição é obrigatório", "Interessado é obrigatório",
-				"Valor é obrigatório", "Valor deve ser um número", "Conta é obrigatório", "Situação é obrigatório")));
+		Assert.assertTrue("Todos os campos obrigatórios foram apresentados", listaMsg.containsAll(allRequiredFieldsMsg));
+		
 		listaMsg.forEach(o -> System.out.println(o));
 	}
 
 	@Test
 	public void deveExcluirUmaConta() {
+		
 		ContaRequest contaRequest = new ContaRequest("Conta a ser Excuida");
 		String newAccountId = createApiResource("/contas", contaRequest)
-				.statusCode(getMethodExpectedStatusCode(Method.POST)).extract().path("id").toString();
-		deleteAPIResource("/contas", newAccountId).statusCode(getMethodExpectedStatusCode(Method.DELETE));
+				.statusCode(getMethodExpectedStatusCode(Method.POST))
+				.extract()
+				.path("id").toString();
+		
+		deleteAPIResource("/contas", newAccountId)
+		.statusCode(getMethodExpectedStatusCode(Method.DELETE));
 	}
 
 	@Test 
@@ -196,10 +220,6 @@ public class BarrigaTest extends BaseTest {
 		
 		ContaResponse ContaCriada2 = createApiResource("/contas", conta2)
 				.extract().body().as(ContaResponse.class);
-		
-		
-		
-//				;;createApiResource("/contas", conta2);
 		
 		transacaoReq1 = new TransacaoRequest();
 		transacaoReq1.setConta_id(ContaCriada1.getId());
