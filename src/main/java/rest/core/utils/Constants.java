@@ -15,4 +15,9 @@ public interface Constants {
 	ContentType APP_CONTENT_TYPE = ContentType.JSON;
 	
 	Long MAX_TIMEOUT = 10000L;
+	
+	String APP_LOGIN_EMAIL = "automation.dvmrkolv@gmail.com";
+	String APP_LOGIN_PASSWORD = "wXY2AUQXYy3gbeq";
+	String APP_LOGIN_TOKEN_SUFFIX = "JWT ";
+	
 }

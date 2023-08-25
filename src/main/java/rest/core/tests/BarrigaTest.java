@@ -1,7 +1,8 @@
 package rest.core.tests;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.is;
+import static io.restassured.RestAssured.*;
+import static java.time.temporal.ChronoUnit.DAYS;
+import static org.hamcrest.Matchers.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -79,7 +80,7 @@ public class BarrigaTest extends BaseTest {
 	}
 
 	@Test
-	public void NãoDeveCriarContaComNomeRepetido() {
+	public void NaoDeveCriarContaComNomeRepetido() {
 		ContaRequest conta = new ContaRequest(String.join("_", "Conta", LocalDateTime.now().toString()));
 		createApiResource("/contas", conta).statusCode(HttpStatus.SC_CREATED);
 
@@ -103,17 +104,15 @@ public class BarrigaTest extends BaseTest {
 		Assert.assertNotNull(idContaCriada);
 		Assert.assertTrue(idContaCriada > 0);
 		
-		
 		transacaoReq = new TransacaoRequest();
 		transacaoReq.setConta_id(idContaCriada);
 		transacaoReq.setDescricao("Descrição de Movimentação");
 		transacaoReq.setEnvolvido("Envolvido na Movimentação");
 		transacaoReq.setTipo(TipoTransacao.REC);
-		transacaoReq.setData_transacao(LocalDateTime.now().format(DATE_FORMATTER_DD_MM_YY));
-		transacaoReq.setData_pagamento(LocalDateTime.now().format(DATE_FORMATTER_DD_MM_YY));
+		transacaoReq.setData_transacao(dateUtils.howMuchTimeAgoString(100L, DAYS));
+		transacaoReq.setData_pagamento(dateUtils.howMuchTimeAgoString(10L, DAYS));
 		transacaoReq.setValor(100f);
 		transacaoReq.setStatus(true);
-
 		createApiResource("/transacoes", transacaoReq)
 		.statusCode(getMethodExpectedStatusCode(Method.POST));
 	}
@@ -134,12 +133,17 @@ public class BarrigaTest extends BaseTest {
 		transacaoReq.setDescricao("Descrição de Movimentação");
 		transacaoReq.setEnvolvido("Envolvido na Movimentação");
 		transacaoReq.setTipo(TipoTransacao.REC);
-		transacaoReq.setData_transacao(LocalDateTime.now().plusYears(10).format(DATE_FORMATTER_DD_MM_YY));
+		transacaoReq.setData_transacao(dateUtils.howMuchTimeAheadString(100L, DAYS));
 		transacaoReq.setData_pagamento(LocalDateTime.now().format(DATE_FORMATTER_DD_MM_YY));
 		transacaoReq.setValor(200f);
 		transacaoReq.setStatus(true);
 
-		createApiResource("/transacoes", transacaoReq).statusCode(HttpStatus.SC_BAD_REQUEST);
+		String errorResponse = createApiResource("/transacoes", transacaoReq)
+		.statusCode(HttpStatus.SC_BAD_REQUEST)
+		.extract().jsonPath().getString("msg").replaceAll("[\\[\\]]", "")
+		;
+		
+		Assert.assertEquals(errorResponse, "Data da Movimentação deve ser menor ou igual à data atual");
 	}
 
 	@Test
