@@ -14,8 +14,10 @@ import org.apache.http.HttpStatus;
 import org.junit.Assert;
 import org.junit.Test;
 
+import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.http.Method;
+import io.restassured.specification.FilterableRequestSpecification;
 import rest.core.BaseTest;
 import rest.model.enums.TipoTransacao;
 import rest.model.requests.ContaRequest;
@@ -32,9 +34,15 @@ public class BarrigaTest extends BaseTest {
 
 	@Test
 	public void naoDeveAcessarApiSemToken() {
-		given().log().all().contentType(ContentType.JSON.withCharset(CharEncoding.UTF_8)).when().get("/contas").then()
-				.log().all().statusCode(HttpStatus.SC_UNAUTHORIZED);
+		FilterableRequestSpecification reqFilter = (FilterableRequestSpecification) RestAssured.requestSpecification;
+		reqFilter = reqFilter.removeHeader("Authorization");
+		
+		given().when()
+			.request(Method.GET, "/contas")
+		.then().log().all()
+			.statusCode(HttpStatus.SC_UNAUTHORIZED);
 	}
+
 
 	@Test
 	public void deveListarContas() {

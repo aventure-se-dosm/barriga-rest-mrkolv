@@ -14,13 +14,13 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import br.dev.marcelodeoliveira.rest.model.UserAuth;
-import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.builder.ResponseSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.http.Header;
 import io.restassured.http.Method;
 import io.restassured.response.ValidatableResponse;
+import io.restassured.specification.FilterableRequestSpecification;
 import io.restassured.specification.RequestSpecification;
 import rest.core.utils.Constants;
 import rest.core.utils.DateUtils;
@@ -73,7 +73,6 @@ public class BaseTest implements Constants {
 		token  = APP_LOGIN_TOKEN_SUFFIX +
 		RestAssured.given().log().all()
 		.body(loginAuth)
-//		.accept(APP_CONTENT_TYPE)
 		.when().post("/signin")
 		.then().log().all()
 			.statusCode(HttpStatus.SC_OK)
@@ -115,6 +114,13 @@ public class BaseTest implements Constants {
 				.header(new Header("Authorization", getToken()));
 		
 	}
+	protected static RequestSpecification RequestWithJwtToken(FilterableRequestSpecification reqFilter) {
+		return  given().log().all()
+				.contentType(ContentType.JSON.withCharset(CharEncoding.UTF_8))
+				.when()
+				.header(new Header("Authorization", getToken()));
+		
+	}
 	
 	
 	private static  void applyStaticallyRequestMethodForAllResourcesId(Method method, String basepath ) {
@@ -124,7 +130,7 @@ public class BaseTest implements Constants {
 		.then()
 		.log().all()
 		.extract().jsonPath().getList("id");
-		//	.extract().jsonPath().getList("id");
+		//	.extract().jsonPath().getList("id[0]");
 		
 		if (allApiResourceId.isEmpty()) return;
 		
