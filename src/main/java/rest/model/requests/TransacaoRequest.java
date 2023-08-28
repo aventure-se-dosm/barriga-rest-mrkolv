@@ -1,10 +1,5 @@
 package rest.model.requests;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-
-import rest.model.enums.TipoTransacao;
-
 public class TransacaoRequest {
 
 	private Integer id;

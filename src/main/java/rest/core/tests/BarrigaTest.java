@@ -1,26 +1,24 @@
 package rest.core.tests;
 
-import static io.restassured.RestAssured.*;
+import static io.restassured.RestAssured.given;
 import static java.time.temporal.ChronoUnit.DAYS;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.codec.CharEncoding;
 import org.apache.http.HttpStatus;
 import org.junit.Assert;
 import org.junit.Test;
 
+import br.dev.marcelodeoliveira.rest.model.enums.TipoTransacao;
+import br.dev.marcelodeoliveira.rest.model.requests.ContaRequest;
 import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
 import io.restassured.http.Method;
 import io.restassured.specification.FilterableRequestSpecification;
 import rest.core.BaseTest;
-import rest.model.enums.TipoTransacao;
-import rest.model.requests.ContaRequest;
 import rest.model.requests.TransacaoRequest;
 import rest.model.responses.ContaResponse;
 
