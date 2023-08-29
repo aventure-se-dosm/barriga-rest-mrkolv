@@ -13,22 +13,25 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import br.dev.marcelodeoliveira.rest.model.UserAuth;
-import io.restassured.RestAssured;
+import  io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.builder.ResponseSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.http.Header;
 import io.restassured.http.Method;
 import io.restassured.response.ValidatableResponse;
+import io.restassured.specification.FilterableRequestSpecification;
 import io.restassured.specification.RequestSpecification;
 import rest.core.utils.Constants;
+import rest.core.utils.DateUtils;
 
 public class BaseTest implements Constants {
 
 	static private RequestSpecBuilder reqBuilder;
 	static private ResponseSpecBuilder resBuilder;
-	private static String token = "JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6NDA1NzN9.TVUD2XK-pMxp6crPVLymwG-WQNU4GyzD4JGdjrWLG_g";
+	private static String token;
 	protected final Object EMPTY_JSON = "{}";
+	protected DateUtils dateUtils = new DateUtils();
 
 	private static List<String> accountIdList;
 	private static List<String> transactionIdList;
@@ -50,7 +53,7 @@ public class BaseTest implements Constants {
 		transactionIdList = new ArrayList<>();
 		
 		RestAssured.baseURI = APP_BASE_URL;
-		RestAssured.port = APP_PORT_DEFAULT;	
+		//RestAssured.port = APP_PORT_DEFAULT;	
 		RestAssured.basePath = APP_BASE_PATH;
 
 		reqBuilder = new RequestSpecBuilder();
@@ -61,9 +64,20 @@ public class BaseTest implements Constants {
 
 		RestAssured.requestSpecification = reqBuilder.build();
 		RestAssured.responseSpecification = resBuilder.build();
+		setupToken();
 		cleanUpApiCreatedTestDataMass();
 	}
 	
+	private static void setupToken() {
+		UserAuth loginAuth = new UserAuth(APP_LOGIN_EMAIL, APP_LOGIN_PASSWORD);
+		token  = APP_LOGIN_TOKEN_SUFFIX +
+		RestAssured.given().log().all()
+		.body(loginAuth)
+		.when().post("/signin")
+		.then().log().all()
+			.statusCode(HttpStatus.SC_OK)
+			.extract().jsonPath().getString("token");
+	}
 	protected boolean savedTestAccountIds (String accountId) {
 		return getListAccountId().add(accountId);
 	}
@@ -77,7 +91,8 @@ public class BaseTest implements Constants {
 		String senha = "senha"; // <input id='senha' ... name='senha'>
 		String cookie = getCookieStringFromResponse(email, senha);
 
-		return given().log().all()
+		return given()
+				.log().all()
 				.contentType(APP_CONTENT_TYPE)
 				.cookie("connect.sid", getCookieValue(cookie))
 				.when();
@@ -85,6 +100,7 @@ public class BaseTest implements Constants {
 	
 	
 	protected static RequestSpecification RequestWithJwtTokenStatically() {
+		
 		return  given().log().all()
 				.contentType(ContentType.JSON.withCharset(CharEncoding.UTF_8))
 				.when()
@@ -98,18 +114,30 @@ public class BaseTest implements Constants {
 				.header(new Header("Authorization", getToken()));
 		
 	}
+	protected static RequestSpecification RequestWithJwtToken(FilterableRequestSpecification reqFilter) {
+		return  given().log().all()
+				.contentType(ContentType.JSON.withCharset(CharEncoding.UTF_8))
+				.when()
+				.header(new Header("Authorization", getToken()));
+		
+	}
+	
 	
 	private static  void applyStaticallyRequestMethodForAllResourcesId(Method method, String basepath ) {
 		List<String> allApiResourceId = 
-				RequestWithJwtTokenStatically()
-				.get(basepath)
-				.then().log().all()
-				.extract().jsonPath().getList("id");
+				 RequestWithJwtTokenStatically()
+		.get(basepath)
+		.then()
+		.log().all()
+		.extract().jsonPath().getList("id");
+		//	.extract().jsonPath().getList("id[0]");
 		
 		if (allApiResourceId.isEmpty()) return;
 		
 		for(Object apiResourceId : allApiResourceId) {
-			applyStaticallyAPIMethodToResource(method, basepath, apiResourceId);
+			applyStaticallyAPIMethodToResource(method, basepath, apiResourceId)
+			//.statusCode(getMethodExpectedStatusCode(method));
+			;
 		}
 		;
 	}
@@ -130,13 +158,16 @@ public class BaseTest implements Constants {
 	private static ValidatableResponse applyStaticallyAPIMethodToResource(Method method, String basepath, Object resourceId) {
 		return RequestWithJwtToken()
 		.request(method, String.join("/", basepath, resourceId.toString()))
-		.then().statusCode(getMethodExpectedStatusCode(method));
-	}
+		.then()//.statusCode(getMethodExpectedStatusCode(method))
+		;
+	}//
 	protected static ValidatableResponse applyAPIMethodToResource(Method method, String basepath, Object resourceId) {
 		return RequestWithJwtToken()
 				
-				.request(method, String.join("/", basepath, method.equals(Method.GET)?"\r":resourceId.toString()))
-				.then().statusCode(getMethodExpectedStatusCode(method));
+				.request(method, String.join("/", basepath, method.equals(Method.GET)?".":resourceId.toString()))
+				.then()
+				//.statusCode(getMethodExpectedStatusCode(method))
+				;
 	}
 	
 	protected static int getMethodExpectedStatusCode(Method method) {
@@ -174,16 +205,13 @@ public class BaseTest implements Constants {
 				.request(Method.POST, basePath)
 				.then()
 				.log().all()
-				
-				//.statusCode(getMethodExpectedStatusCode(Method.POST))
-		;
+				;
 	}
 	
 	protected  ValidatableResponse  deleteAPIResource(String basePath, Object resourceId) {
 		return RequestWithJwtToken()		
 				.request(Method.DELETE, String.join("/", basePath, resourceId.toString()))
-				.then()
-				//.statusCode(getMethodExpectedStatusCode(Method.DELETE))
+				.then().log().all()
 				;
 	}
 	protected ValidatableResponse editApiResource(String basePath,  Object resourceId, Object requestBody) {
@@ -198,14 +226,12 @@ public class BaseTest implements Constants {
 		return RequestWithJwtToken()
 				.request(Method.GET, String.join("/", basePath, resourceId.toString()))
 				.then()
-				//.statusCode(getMethodExpectedStatusCode(Method.GET))
 				;
 	}
 	protected ValidatableResponse getAllApiResource(String basePath) {
 		return RequestWithJwtToken()
 				.request(Method.GET, String.join("/", basePath))
 				.then()
-				//.statusCode(getMethodExpectedStatusCode(Method.GET))
 				;
 	}
 

@@ -1,4 +1,4 @@
-package rest.model.enums;
+package br.dev.marcelodeoliveira.rest.model.enums;
 enum tipoTrans{
 	REC("receita"),
 	DESP("despesa");

@@ -1,4 +1,4 @@
-package rest.model.requests;
+package br.dev.marcelodeoliveira.rest.model.requests;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,10 +1,5 @@
 package rest.model.requests;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-
-import rest.model.enums.TipoTransacao;
-
 public class TransacaoRequest {
 
 	private Integer id;
@@ -17,24 +12,13 @@ public class TransacaoRequest {
 	private Boolean status;
 	private Integer conta_id;
 	private Integer usuario_id;
-	public TransacaoRequest(Integer id, String descricao, String envolvido, String tipo, String data_transacao,
-			String data_pagamento, Float valor, Boolean status, Integer conta_id, Integer usuario_id) {
-		super();
-		this.id = id;
-		this.descricao = descricao;
-		this.envolvido = envolvido;
-		this.tipo = tipo;
-		this.data_transacao = data_transacao;
-		this.data_pagamento = data_pagamento;
-		this.valor = valor;
-		this.status = status;
-		this.conta_id = conta_id;
-		this.usuario_id = usuario_id;
-	}
+	
+
 		
 	public TransacaoRequest() {
 		
 	}
+
 
 	public Integer getId() {
 		return id;

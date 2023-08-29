@@ -1,4 +1,4 @@
-package rest.model.responses;
+package br.dev.marcelodeoliveira.rest.model.responses;
 
 import java.util.Date;
 

@@ -1,0 +1,34 @@
+[
+    {
+        "param": "data_transacao",
+        "msg": "Data da Movimentação é obrigatório"
+    },
+    {
+        "param": "data_pagamento",
+        "msg": "Data do pagamento é obrigatório"
+    },
+    {
+        "param": "descricao",
+        "msg": "Descrição é obrigatório"
+    },
+    {
+        "param": "envolvido",
+        "msg": "Interessado é obrigatório"
+    },
+    {
+        "param": "valor",
+        "msg": "Valor é obrigatório"
+    },
+    {
+        "param": "valor",
+        "msg": "Valor deve ser um número"
+    },
+    {
+        "param": "conta_id",
+        "msg": "Conta é obrigatório"
+    },
+    {
+        "param": "status",
+        "msg": "Situação é obrigatório"
+    }
+]

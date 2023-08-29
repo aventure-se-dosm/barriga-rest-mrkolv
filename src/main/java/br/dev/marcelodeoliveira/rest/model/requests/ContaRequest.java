@@ -1,4 +1,4 @@
-package rest.model.requests;
+package br.dev.marcelodeoliveira.rest.model.requests;
 
 public class ContaRequest {
 	public String nome;
@@ -10,13 +10,11 @@ public class ContaRequest {
 		setNome(nome);
 	}
 
-	public String setNome(String nome) {
-		
+	public String setNome(String nome) {		
 		return (this.nome = nome);
 	}
 
-	public String getNome() {
-		
+	public String getNome() {		
 		return this.nome;
 	}
 
